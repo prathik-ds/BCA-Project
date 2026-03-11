@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { User, Mail, Phone, Building2, BookOpen, QrCode, Edit2, Camera, Save, Shield, Calendar, MapPin } from 'lucide-react'
+import { User, Mail, Phone, Building2, BookOpen, Edit2, Camera, Save, Calendar, MapPin } from 'lucide-react'
+import QRCodeDisplay from '../components/QRCodeDisplay'
 
 const mockProfile = {
   user_id: 1, first_name: 'Pratham', last_name: 'Sharma', email: 'pratham@mitadt.edu', phone: '+91 98765 43210', role: 'participant',
   college: { name: 'MIT ADT University', college_code: 'MITADT', city: 'Pune', state: 'Maharashtra' },
   department: { dept_name: 'Computer Applications' },
-  qr_token: 'USR-QR-001-4F7B2E',
+  qr_token: 'user:1:1741622400:a9f3b2c8d1e0:7b4e2a19f3c6d8e5',
   stats: { events_registered: 5, events_attended: 3, certificates: 2, wallet_balance: 1250, team_count: 2 },
   created_at: '2026-02-15',
 }
@@ -86,17 +87,12 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* QR Code */}
-      <div className="p-6 rounded-2xl bg-surface-700/30 border border-white/5 flex items-center gap-6">
-        <div className="w-28 h-28 rounded-2xl bg-white flex items-center justify-center shrink-0">
-          <QrCode size={80} className="text-surface-900"/>
-        </div>
-        <div>
-          <h3 className="font-bold text-white mb-1 flex items-center gap-2">Your Personal QR Code <Shield size={14} className="text-nexus-400"/></h3>
-          <p className="text-sm text-gray-400 mb-2">Show this at event venues for instant check-in. HMAC-signed for security.</p>
-          <code className="text-xs text-nexus-400 bg-nexus-400/10 px-3 py-1.5 rounded-lg font-mono">{mockProfile.qr_token}</code>
-        </div>
-      </div>
+      {/* QR Code — Live Canvas Render */}
+      <QRCodeDisplay
+        token={mockProfile.qr_token}
+        userName={`${mockProfile.first_name} ${mockProfile.last_name}`}
+        type="user"
+      />
     </div>
   )
 }

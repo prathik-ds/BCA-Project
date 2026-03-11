@@ -10,6 +10,7 @@ import SchedulePage from './pages/SchedulePage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import CertificatesPage from './pages/CertificatesPage'
 import ProfilePage from './pages/ProfilePage'
+import QRScannerPage from './pages/QRScannerPage'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
 
         {/* Protected routes with dashboard layout */}
         <Route element={<DashboardLayout />}>
+          {/* ── Participant Portal ── */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventsPage />} />
@@ -30,6 +32,9 @@ function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/certificates" element={<CertificatesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* ── Coordinator Tools ── */}
+          <Route path="/scanner" element={<QRScannerPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
-import { LayoutDashboard, Calendar, Users, Wallet, Trophy, Clock, Award, User, LogOut, Menu, X, Bell, Search, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Wallet, Trophy, Clock, Award, User, LogOut, Menu, X, Bell, Search, ChevronDown, ScanLine } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -11,6 +11,8 @@ const navItems = [
   { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/certificates', icon: Award, label: 'Certificates' },
   { to: '/profile', icon: User, label: 'Profile' },
+  { divider: true, label: 'Coordinator' },
+  { to: '/scanner', icon: ScanLine, label: 'QR Scanner' },
 ]
 
 export default function DashboardLayout() {
@@ -35,11 +37,15 @@ export default function DashboardLayout() {
 
         {/* Nav links */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} onClick={() => setSidebarOpen(false)}
+          {navItems.map((item, i) => item.divider ? (
+            <div key={i} className="pt-4 pb-1 px-4">
+              <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">{item.label}</span>
+            </div>
+          ) : (
+            <NavLink key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive ? 'bg-nexus-400/10 text-nexus-400 border border-nexus-400/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-              <Icon size={18} />
-              <span>{label}</span>
+              <item.icon size={18} />
+              <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
