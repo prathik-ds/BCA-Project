@@ -1,0 +1,15 @@
+# NexusFest API — Apache URL Rewriting
+# Routes all requests to index.php for REST routing
+
+RewriteEngine On
+
+# Redirect HTTP to HTTPS (uncomment in production)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Don't rewrite existing files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route everything to index.php
+RewriteRule ^(.*)$ index.php [QSA,L]
