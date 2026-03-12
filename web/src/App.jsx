@@ -11,6 +11,8 @@ import LeaderboardPage from './pages/LeaderboardPage'
 import CertificatesPage from './pages/CertificatesPage'
 import ProfilePage from './pages/ProfilePage'
 import QRScannerPage from './pages/QRScannerPage'
+import AdminLayout from './layouts/AdminLayout'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 
 function App() {
   return (
@@ -35,6 +37,18 @@ function App() {
 
           {/* ── Coordinator Tools ── */}
           <Route path="/scanner" element={<QRScannerPage />} />
+        </Route>
+
+        {/* ── Admin Portal ── */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminDashboardPage />} />
+          <Route path="/admin/events" element={<AdminDashboardPage />} />
+          <Route path="/admin/finance" element={<AdminDashboardPage />} />
+          <Route path="/admin/reports" element={<AdminDashboardPage />} />
+          <Route path="/admin/announcements" element={<AdminDashboardPage />} />
+          <Route path="/admin/logs" element={<AdminDashboardPage />} />
+          <Route path="/admin/settings" element={<AdminDashboardPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

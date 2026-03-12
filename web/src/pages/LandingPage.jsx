@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { Calendar, Users, Trophy, MapPin, Ticket, ChevronRight, Sparkles, Zap, Star, Menu, X, ArrowRight, Clock, Award, Wallet } from 'lucide-react'
 
 /* ─── Countdown Hook ─── */
@@ -51,19 +52,19 @@ function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-surface-900/90 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 group">
+        <Link to="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nexus-400 to-accent-500 flex items-center justify-center text-white font-bold text-lg font-display group-hover:scale-110 transition-transform">N</div>
           <span className="text-xl font-bold font-display bg-gradient-to-r from-nexus-400 to-accent-400 bg-clip-text text-transparent">NexusFest</span>
-        </a>
+        </Link>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-8">
           {['Events', 'Schedule', 'Leaderboard', 'About'].map(l => (
             <a key={l} href={`#${l.toLowerCase()}`} className="text-sm text-gray-300 hover:text-nexus-400 transition-colors font-medium">{l}</a>
           ))}
-          <button className="px-5 py-2.5 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-xl text-white text-sm font-semibold hover:shadow-[0_0_25px_rgba(6,232,225,0.3)] hover:scale-105 transition-all duration-300">
+          <Link to="/login" className="px-5 py-2.5 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-xl text-white text-sm font-semibold hover:shadow-[0_0_25px_rgba(6,232,225,0.3)] hover:scale-105 transition-all duration-300">
             Login
-          </button>
+          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -79,7 +80,7 @@ function Navbar() {
             {['Events', 'Schedule', 'Leaderboard', 'About'].map(l => (
               <a key={l} href={`#${l.toLowerCase()}`} className="text-gray-300 hover:text-nexus-400 py-2 font-medium" onClick={() => setMenuOpen(false)}>{l}</a>
             ))}
-            <button className="mt-2 px-5 py-3 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-xl text-white font-semibold w-full">Login</button>
+            <Link to="/login" className="mt-2 px-5 py-3 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-xl text-white font-semibold text-center w-full" onClick={() => setMenuOpen(false)}>Login</Link>
           </div>
         </div>
       )}
@@ -141,12 +142,12 @@ function Hero() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <button className="group px-8 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(6,232,225,0.35)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+          <Link to="/login" className="group px-8 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(6,232,225,0.35)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
             Register Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-          <button className="px-8 py-4 border-2 border-nexus-400/40 rounded-2xl text-nexus-400 font-bold text-lg hover:bg-nexus-400/10 hover:border-nexus-400 transition-all duration-300">
+          </Link>
+          <Link to="/events" className="px-8 py-4 border-2 border-nexus-400/40 rounded-2xl text-nexus-400 font-bold text-lg hover:bg-nexus-400/10 hover:border-nexus-400 transition-all duration-300 flex items-center justify-center">
             Explore Events
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -247,17 +248,17 @@ function FeaturedEvents() {
                     style={{ width: `${(parseInt(evt.spots) / parseInt(evt.spots.split('/')[1])) * 100}%` }} />
                 </div>
               </div>
-              <button className="w-full py-3 rounded-xl bg-white/5 text-white font-semibold text-sm hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500 transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+              <Link to="/login" className="w-full py-3 rounded-xl bg-white/5 text-white font-semibold text-sm hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500 transition-all duration-300 flex items-center justify-center gap-2 group/btn">
                 Register Now <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-              </button>
+              </Link>
             </div>
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <button className="px-8 py-3 border-2 border-nexus-400/30 rounded-xl text-nexus-400 font-semibold hover:bg-nexus-400/10 hover:border-nexus-400 transition-all">
+          <Link to="/events" className="px-8 py-3 border-2 border-nexus-400/30 rounded-xl text-nexus-400 font-semibold hover:bg-nexus-400/10 hover:border-nexus-400 transition-all inline-block">
             View All Events →
-          </button>
+          </Link>
         </div>
       </div>
     </section>
@@ -358,9 +359,9 @@ function CTASection() {
           <div className="relative z-10 text-center">
             <h2 className="text-4xl sm:text-5xl font-black font-display mb-4 text-white">Ready to make <span className="bg-gradient-to-r from-nexus-400 to-accent-400 bg-clip-text text-transparent">history</span>?</h2>
             <p className="text-gray-400 mb-8 max-w-lg mx-auto text-lg">Join 5,000+ participants from 30+ colleges. Register today and be part of the biggest inter-college fest of 2026.</p>
-            <button className="group px-10 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_40px_rgba(6,232,225,0.3)] hover:scale-105 transition-all duration-300 animate-pulse-glow inline-flex items-center gap-2">
+            <Link to="/login" className="group px-10 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_40px_rgba(6,232,225,0.3)] hover:scale-105 transition-all duration-300 animate-pulse-glow inline-flex items-center gap-2">
               Register Now — It's Free <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -383,8 +384,16 @@ function Footer() {
             </div>
             <p className="text-sm text-gray-500 leading-relaxed">The unified college event management ecosystem. Built for the next generation of fest experiences.</p>
           </div>
+          <div>
+            <h4 className="font-semibold text-white mb-4 text-sm">Platform</h4>
+            <ul className="space-y-2.5">
+              <li><Link to="/events" className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">Events</Link></li>
+              <li><Link to="/schedule" className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">Schedule</Link></li>
+              <li><Link to="/leaderboard" className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">Leaderboard</Link></li>
+              <li><Link to="/certificates" className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">Certificates</Link></li>
+            </ul>
+          </div>
           {[
-            { title: 'Platform', links: ['Events', 'Schedule', 'Leaderboard', 'Certificates'] },
             { title: 'Community', links: ['Colleges', 'Coordinators', 'Volunteers', 'Sponsors'] },
             { title: 'Support', links: ['Help Center', 'Contact Us', 'Privacy Policy', 'Terms'] },
           ].map(col => (

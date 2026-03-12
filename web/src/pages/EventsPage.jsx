@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Clock, MapPin, Trophy, Users, Filter, ChevronRight, X, SlidersHorizontal } from 'lucide-react'
+import { Search, Clock, MapPin, Trophy, Users, Filter, ChevronRight, X, SlidersHorizontal, CheckCircle } from 'lucide-react'
 
 /* ── Mock data matching MySQL `events` table exactly ── */
 const mockEvents = [
@@ -35,6 +35,7 @@ export default function EventsPage() {
   const [scope, setScope] = useState('all')
   const [type, setType] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [registeredId, setRegisteredId] = useState(null)
 
   const filtered = useMemo(() => {
     return mockEvents.filter(e => {
@@ -154,8 +155,24 @@ export default function EventsPage() {
               </div>
 
               {/* CTA */}
-              <button className="w-full py-2.5 rounded-xl bg-white/5 text-white text-sm font-semibold hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500 transition-all duration-300 flex items-center justify-center gap-2 group/btn">
-                Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRegisteredId(evt.event_id);
+                  setTimeout(() => setRegisteredId(null), 3000);
+                }}
+                disabled={registeredId === evt.event_id}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn ${
+                  registeredId === evt.event_id 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500'
+                }`}>
+                {registeredId === evt.event_id ? (
+                  <><CheckCircle size={14} /> Registered!</>
+                ) : (
+                  <>Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" /></>
+                )}
               </button>
             </Link>
           ))}
