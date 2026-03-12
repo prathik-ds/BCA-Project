@@ -1,9 +1,6 @@
 <?php
-/**
- * NexusFest API — Application Constants
- */
-
-// ── Application ──
+// ── Application settings ──
+define('BASE_URL', 'http://localhost:8000');
 define('APP_NAME', 'NexusFest');
 define('APP_VERSION', '1.0.0');
 define('API_PREFIX', '/api/v1');
@@ -36,3 +33,10 @@ define('ROLE_PARTICIPANT', 'participant');
 define('ROLE_COORDINATOR', 'coordinator');
 define('ROLE_ADMIN', 'admin');
 define('ROLE_SUPER_ADMIN', 'super_admin');
+
+// ── Database Credentials ──
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'nexusfest');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_PORT', getenv('DB_PORT') ?: '3306');

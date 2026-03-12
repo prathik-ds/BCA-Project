@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, Wallet, Settings, TrendingUp, AlertCircle, CheckCircle, ArrowRight, ShieldCheck, Database, FileText } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Users, Calendar, Wallet, Settings, TrendingUp, AlertCircle, CheckCircle, ArrowRight, ShieldCheck, Database, FileText, ChevronRight } from 'lucide-react'
 
 /* Mock Admin Data */
 const adminStats = [
@@ -17,6 +17,24 @@ const recentActions = [
 ]
 
 export default function AdminDashboardPage() {
+  const location = useLocation()
+  const isMainDashboard = location.pathname === '/admin/dashboard'
+
+  if (!isMainDashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-800/20 rounded-3xl border border-white/5 border-dashed">
+        <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
+          <Settings size={40} className="text-amber-500 animate-spin-slow" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">{location.pathname.split('/').pop().charAt(0).toUpperCase() + location.pathname.split('/').pop().slice(1)} Module</h2>
+        <p className="text-gray-500 max-w-sm text-center">This administrative module is currently being optimized for high-traffic operations. Check back shortly.</p>
+        <Link to="/admin/dashboard" className="mt-8 flex items-center gap-2 text-amber-500 font-bold hover:underline">
+          <ChevronRight size={16} className="rotate-180" /> Back to Command Center
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Admin Header */}

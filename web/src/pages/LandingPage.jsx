@@ -394,12 +394,20 @@ function Footer() {
             </ul>
           </div>
           {[
-            { title: 'Community', links: ['Colleges', 'Coordinators', 'Volunteers', 'Sponsors'] },
-            { title: 'Support', links: ['Help Center', 'Contact Us', 'Privacy Policy', 'Terms'] },
+            { title: 'Community', links: [{l:'Colleges', to:'#'}, {l:'Coordinators', to:'/login'}, {l:'Volunteers', to:'/login'}, {l:'Sponsors', to:'#'}] },
+            { title: 'Support', links: [{l:'Help Center', to:'#'}, {l:'Contact Us', to:'#'}, {l:'Privacy Policy', to:'#'}, {l:'Terms', to:'#'}] },
           ].map(col => (
             <div key={col.title}>
               <h4 className="font-semibold text-white mb-4 text-sm">{col.title}</h4>
-              <ul className="space-y-2.5">{col.links.map(l => <li key={l}><a href="#" className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">{l}</a></li>)}</ul>
+              <ul className="space-y-2.5">
+                {col.links.map(item => (
+                  <li key={item.l}>
+                    <Link to={item.to} className="text-sm text-gray-500 hover:text-nexus-400 transition-colors">
+                      {item.l}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>

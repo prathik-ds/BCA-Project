@@ -50,8 +50,8 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        {/* User card */}
-        <div className="p-4 border-t border-white/5">
+        {/* User card and Sign Out */}
+        <div className="p-4 border-t border-white/5 space-y-1">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-700/40">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-nexus-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs">PS</div>
             <div className="flex-1 min-w-0">
@@ -59,7 +59,6 @@ export default function DashboardLayout() {
               <div className="text-xs text-gray-500 truncate">MIT ADT University</div>
             </div>
           </div>
-          <button onClick={() => navigate('/login')} className="mt-2 w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:text-red-400 hover:bg-red-400/5 transition-all">
             <LogOut size={16} /> Sign Out
           </button>
         </div>
