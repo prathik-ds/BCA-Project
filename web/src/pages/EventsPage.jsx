@@ -1,19 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Clock, MapPin, Trophy, Users, Filter, ChevronRight, X, SlidersHorizontal, CheckCircle } from 'lucide-react'
-
-/* ── Mock data matching MySQL `events` table exactly ── */
-const mockEvents = [
-  { event_id: 1, event_name: 'Code Sprint 2026', category: 'technical', event_type: 'team', scope: 'inter_college', start_datetime: '2026-04-15T09:00:00', end_datetime: '2026-04-15T17:00:00', venue_name: 'CS Auditorium', max_participants: 200, entry_fee: 100, points_first: 100, points_second: 60, points_third: 30, status: 'registration_open', registration_count: 87, description: 'A 8-hour coding marathon. Build innovative solutions to real-world problems.' },
-  { event_id: 2, event_name: 'Dance Battle Royale', category: 'cultural', event_type: 'solo', scope: 'open', start_datetime: '2026-04-15T14:00:00', end_datetime: '2026-04-15T18:00:00', venue_name: 'Main Stage', max_participants: 100, entry_fee: 0, points_first: 80, points_second: 50, points_third: 25, status: 'registration_open', registration_count: 45, description: 'Show your moves in this high-energy dance competition across multiple styles.' },
-  { event_id: 3, event_name: 'Robo Wars', category: 'technical', event_type: 'team', scope: 'inter_college', start_datetime: '2026-04-16T10:00:00', end_datetime: '2026-04-16T16:00:00', venue_name: 'Sports Complex', max_participants: 60, entry_fee: 500, points_first: 120, points_second: 70, points_third: 40, status: 'registration_open', registration_count: 32, description: 'Build and battle robots in this thrilling engineering competition.' },
-  { event_id: 4, event_name: 'E-Sports: Valorant', category: 'gaming', event_type: 'team', scope: 'open', start_datetime: '2026-04-16T12:00:00', end_datetime: '2026-04-16T20:00:00', venue_name: 'Gaming Arena', max_participants: 256, entry_fee: 200, points_first: 90, points_second: 55, points_third: 30, status: 'registration_open', registration_count: 120, description: '5v5 tactical FPS tournament. Compete for glory and massive prizes.' },
-  { event_id: 5, event_name: 'Art Exhibition', category: 'cultural', event_type: 'solo', scope: 'intra_college', start_datetime: '2026-04-17T09:00:00', end_datetime: '2026-04-17T17:00:00', venue_name: 'Gallery Hall', max_participants: 50, entry_fee: 0, points_first: 50, points_second: 30, points_third: 15, status: 'registration_open', registration_count: 28, description: 'Showcase your artistic talent through paintings, sculptures, and digital art.' },
-  { event_id: 6, event_name: 'Quiz Masters', category: 'academic', event_type: 'team', scope: 'inter_college', start_datetime: '2026-04-17T11:00:00', end_datetime: '2026-04-17T14:00:00', venue_name: 'Seminar Hall B', max_participants: 100, entry_fee: 50, points_first: 70, points_second: 45, points_third: 20, status: 'registration_open', registration_count: 64, description: 'Test your knowledge across science, tech, pop culture, and current affairs.' },
-  { event_id: 7, event_name: 'Basketball 3v3', category: 'sports', event_type: 'team', scope: 'inter_college', start_datetime: '2026-04-15T08:00:00', end_datetime: '2026-04-15T18:00:00', venue_name: 'Basketball Court', max_participants: 48, entry_fee: 150, points_first: 80, points_second: 50, points_third: 25, status: 'registration_open', registration_count: 36, description: 'Fast-paced 3-on-3 basketball tournament with knockout rounds.' },
-  { event_id: 8, event_name: 'Startup Pitch', category: 'technical', event_type: 'team', scope: 'open', start_datetime: '2026-04-16T09:00:00', end_datetime: '2026-04-16T13:00:00', venue_name: 'Incubation Center', max_participants: 40, entry_fee: 0, points_first: 100, points_second: 60, points_third: 30, status: 'registration_open', registration_count: 22, description: 'Pitch your startup idea to real investors and industry mentors.' },
-  { event_id: 9, event_name: 'Photography Walk', category: 'cultural', event_type: 'solo', scope: 'open', start_datetime: '2026-04-17T06:00:00', end_datetime: '2026-04-17T10:00:00', venue_name: 'Campus Wide', max_participants: 80, entry_fee: 0, points_first: 40, points_second: 25, points_third: 10, status: 'registration_open', registration_count: 55, description: 'Capture the essence of NexusFest through your lens. Theme revealed on the day.' },
-]
+import { Search, Clock, MapPin, Trophy, Users, Filter, ChevronRight, X, SlidersHorizontal, CheckCircle, Loader2 } from 'lucide-react'
+import api from '../api/axios'
 
 const categories = ['all', 'technical', 'cultural', 'sports', 'gaming', 'academic']
 const scopes = ['all', 'intra_college', 'inter_college', 'open']
@@ -27,9 +15,11 @@ const categoryColors = {
   gaming: 'bg-amber-400/15 text-amber-400 border-amber-400/30',
 }
 
-const formatLabel = (s) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+const formatLabel = (s) => s ? s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''
 
 export default function EventsPage() {
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [scope, setScope] = useState('all')
@@ -37,15 +27,30 @@ export default function EventsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [registeredId, setRegisteredId] = useState(null)
 
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const { data } = await api.get('/events')
+        setEvents(data.data || [])
+      } catch (err) {
+        console.error('Failed to fetch events:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchEvents()
+  }, [])
+
   const filtered = useMemo(() => {
-    return mockEvents.filter(e => {
+    return events.filter(e => {
+      const cat = (e.category_name || '').toLowerCase()
       if (search && !e.event_name.toLowerCase().includes(search.toLowerCase())) return false
-      if (category !== 'all' && e.category !== category) return false
+      if (category !== 'all' && cat !== category) return false
       if (scope !== 'all' && e.scope !== scope) return false
       if (type !== 'all' && e.event_type !== type) return false
       return true
     })
-  }, [search, category, scope, type])
+  }, [events, search, category, scope, type])
 
   const activeFilters = [category, scope, type].filter(f => f !== 'all').length
 
@@ -112,7 +117,12 @@ export default function EventsPage() {
       )}
 
       {/* Events Grid */}
-      {filtered.length > 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <Loader2 className="animate-spin text-nexus-400" size={40} />
+          <p className="text-gray-500 animate-pulse">Syncing with Nexus Grid...</p>
+        </div>
+      ) : filtered.length > 0 ? (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((evt, i) => (
             <Link to={`/events/${evt.event_id}`} key={evt.event_id}
@@ -120,7 +130,9 @@ export default function EventsPage() {
               style={{ animationDelay: `${i * 0.04}s` }}>
               {/* Badges */}
               <div className="flex items-center gap-2 mb-3">
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${categoryColors[evt.category]}`}>{formatLabel(evt.category)}</span>
+                <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${categoryColors[evt.category_name?.toLowerCase()] || 'bg-white/5 text-gray-400'}`}>
+                  {formatLabel(evt.category_name)}
+                </span>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/5 text-gray-400">{formatLabel(evt.scope)}</span>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/5 text-gray-400 flex items-center gap-1">
                   <Users size={10}/> {formatLabel(evt.event_type)}

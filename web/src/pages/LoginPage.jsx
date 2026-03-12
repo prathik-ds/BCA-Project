@@ -1,6 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, User, Building2, Phone, ChevronLeft } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, User, Building2, Phone, ChevronLeft, AlertCircle } from 'lucide-react'
+import api from '../api/axios'
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false)
@@ -9,20 +8,34 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '', college: '' })
+  const [form, setForm] = useState({ email: '', password: '', first_name: '', last_name: '', phone: '', college_id: '1' })
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      if (role === 'admin') {
-        navigate('/admin/dashboard')
-      } else {
-        navigate('/dashboard')
+    setError('')
+
+    try {
+      const endpoint = isSignup ? '/auth/register' : '/auth/login'
+      const { data } = await api.post(endpoint, form)
+
+      if (data.status === 'success') {
+        localStorage.setItem('nexus_token', data.data.access_token)
+        localStorage.setItem('nexus_user', JSON.stringify(data.data.user))
+        
+        if (data.data.user.role === 'admin' || data.data.user.role === 'super_admin') {
+          navigate('/admin/dashboard')
+        } else {
+          navigate('/dashboard')
+        }
       }
-    }, 1200)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Authentication failed. Please check your credentials.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -111,16 +124,23 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-sm animate-shake">
+              <AlertCircle size={18} />
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Signup fields */}
             {isSignup && (
               <>
                 <div className="grid grid-cols-2 gap-4">
-                  <InputField icon={User} label="First Name" value={form.firstName} onChange={v => update('firstName', v)} placeholder="Pratham" />
-                  <InputField icon={User} label="Last Name" value={form.lastName} onChange={v => update('lastName', v)} placeholder="Sharma" />
+                  <InputField icon={User} label="First Name" value={form.first_name} onChange={v => update('first_name', v)} placeholder="Pratham" />
+                  <InputField icon={User} label="Last Name" value={form.last_name} onChange={v => update('last_name', v)} placeholder="Sharma" />
                 </div>
                 <InputField icon={Phone} label="Phone" type="tel" value={form.phone} onChange={v => update('phone', v)} placeholder="+91 98765 43210" />
-                <InputField icon={Building2} label="College" value={form.college} onChange={v => update('college', v)} placeholder="MIT ADT University" />
+                <InputField icon={Building2} label="College ID" value={form.college_id} onChange={v => update('college_id', v)} placeholder="1" />
               </>
             )}
 

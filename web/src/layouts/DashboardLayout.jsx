@@ -59,6 +59,7 @@ export default function DashboardLayout() {
               <div className="text-xs text-gray-500 truncate">MIT ADT University</div>
             </div>
           </div>
+          <button onClick={() => navigate('/')} className="mt-2 w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:text-red-400 hover:bg-red-400/5 transition-all">
             <LogOut size={16} /> Sign Out
           </button>
         </div>
