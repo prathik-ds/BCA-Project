@@ -7,7 +7,7 @@
  */
 
 // ── Error Reporting (disable display in production) ──
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // ── Load Configuration ──
