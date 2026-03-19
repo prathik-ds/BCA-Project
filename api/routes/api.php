@@ -50,6 +50,8 @@ $routes = [
 
     // ── Attendance ──
     'POST /api/v1/attendance/scan'   => ['AttendanceController', 'scan'],
+    'POST /api/v1/attendance/manual' => ['AttendanceController', 'manualCheckIn'],
+    'POST /api/v1/attendance/undo'   => ['AttendanceController', 'undoCheckIn'],
     'POST /api/v1/attendance/sync'   => ['AttendanceController', 'syncOffline'],
     // Attendance event report with {eventId} handled below via regex
 
@@ -121,6 +123,7 @@ $paramRoutes = [
 
     // Admin
     ['GET',    '#^/api/v1/admin/events/(\d+)/registrations$#',          'AdminController',       'getEventRegistrations'],
+    ['PATCH',  '#^/api/v1/admin/users/(\d+)/role$#',                    'AdminController',       'updateUserRole'],
 ];
 
 foreach ($paramRoutes as [$routeMethod, $regex, $controller, $action]) {

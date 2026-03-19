@@ -11,7 +11,7 @@ const navItems = [
   { to: '/results', icon: Star, label: 'Results' },
   { to: '/certificates', icon: Award, label: 'Certificates' },
   { to: '/profile', icon: User, label: 'Profile' },
-  { divider: true, label: 'Coordinator' },
+  { divider: true, label: 'Coordinator Section' },
   { to: '/scanner', icon: ScanLine, label: 'QR Scanner' },
 ]
 
@@ -52,7 +52,12 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item, i) => item.divider ? (
+          {navItems.filter(item => {
+            if (item.label === 'Coordinator Section' || item.label === 'QR Scanner') {
+              return ['coordinator', 'admin', 'super_admin'].includes(user?.role)
+            }
+            return true
+          }).map((item, i) => item.divider ? (
             <div key={i} className="pt-4 pb-1 px-4">
               <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">{item.label}</span>
             </div>
@@ -63,6 +68,12 @@ export default function DashboardLayout() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          
+          {['coordinator', 'admin', 'super_admin'].includes(user?.role) && (
+            <Link to="/coordinator/dashboard" className="flex items-center gap-3 px-4 py-3 mt-4 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all">
+               <Trophy size={16} /> COORDINATOR PORTAL
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t border-white/5 space-y-1">

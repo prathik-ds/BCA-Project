@@ -8,11 +8,25 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = () => {
     api.get('/admin/users')
       .then(res => setUsers(res.data.data || []))
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await api.patch(`/admin/users/${userId}/role`, { role: newRole })
+      // Update local state instead of full reload for speed
+      setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u))
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update role')
+    }
+  }
 
   const filtered = users.filter(u => {
     if (!search) return true
@@ -58,12 +72,22 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4 text-gray-400 text-sm">{user.email}</td>
                   <td className="px-6 py-4 text-gray-400 text-sm">{user.college_code || '-'}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-                      user.role === 'super_admin' ? 'bg-red-500/20 text-red-400' :
-                      user.role === 'admin' ? 'bg-amber-500/20 text-amber-400' :
-                      user.role === 'coordinator' ? 'bg-purple-500/20 text-purple-400' :
-                      'bg-blue-500/20 text-blue-400'
-                    }`}>{user.role}</span>
+                    <select 
+                      value={user.role} 
+                      onChange={(e) => handleRoleChange(user.user_id, e.target.value)}
+                      className={`px-2 py-1 text-xs font-bold rounded-lg bg-surface-900 border border-white/10 text-white outline-none focus:border-amber-500/50 cursor-pointer ${
+                        user.role === 'super_admin' ? 'border-red-500/50 text-red-400' :
+                        user.role === 'admin' ? 'border-amber-500/50 text-amber-400' :
+                        user.role === 'coordinator' ? 'border-purple-500/50 text-purple-400' :
+                        'border-blue-500/50 text-blue-400'
+                      }`}
+                      disabled={user.role === 'super_admin'}
+                    >
+                      <option value="participant">Student</option>
+                      <option value="coordinator">Coordinator</option>
+                      <option value="admin">Admin</option>
+                      {user.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
+                    </select>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${user.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>

@@ -275,4 +275,104 @@ class AttendanceController
             'records' => $records,
         ]);
     }
+
+    /**
+     * POST /api/v1/attendance/manual
+     * Coordinator manually marks a participant as attended
+     */
+    public static function manualCheckIn(): void
+    {
+        $auth = AuthMiddleware::authenticate();
+        AuthMiddleware::requireCoordinator($auth);
+
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $eventId = (int) ($data['event_id'] ?? 0);
+        $regId = (int) ($data['registration_id'] ?? 0);
+
+        if (!$eventId || !$regId) {
+            Response::error('Event ID and Registration ID are required', 400);
+        }
+
+        $db = Database::connect();
+
+        // Find registration
+        $stmt = $db->prepare("SELECT user_id, status FROM event_registrations WHERE registration_id = :reg AND event_id = :evt");
+        $stmt->execute([':reg' => $regId, ':evt' => $eventId]);
+        $reg = $stmt->fetch();
+
+        if (!$reg) {
+            Response::notFound('Registration not found for this event');
+        }
+
+        if ($reg['status'] === 'checked_in') {
+            Response::error('Participant is already checked in', 400);
+        }
+
+        // Record attendance log
+        $stmt = $db->prepare("
+            INSERT INTO attendance_logs 
+                (user_id, event_id, registration_id, check_type, scanned_at, scanned_by, scan_method, synced)
+            VALUES (:user, :event, :reg, 'check_in', NOW(), :scanner, 'manual_admin', 1)
+        ");
+        $stmt->execute([
+            ':user'    => $reg['user_id'],
+            ':event'   => $eventId,
+            ':reg'     => $regId,
+            ':scanner' => $auth['user_id']
+        ]);
+
+        // Update registration status
+        $db->prepare("UPDATE event_registrations SET status = 'checked_in' WHERE registration_id = :id")
+           ->execute([':id' => $regId]);
+
+        Response::success(null, 'Participant checked in successfully');
+    }
+
+    /**
+     * POST /api/v1/attendance/undo
+     * Coordinator reverts a check-in (marks back as confirmed)
+     */
+    public static function undoCheckIn(): void
+    {
+        $auth = AuthMiddleware::authenticate();
+        AuthMiddleware::requireCoordinator($auth);
+
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $eventId = (int) ($data['event_id'] ?? 0);
+        $regId = (int) ($data['registration_id'] ?? 0);
+
+        if (!$eventId || !$regId) {
+            Response::error('Event ID and Registration ID are required', 400);
+        }
+
+        $db = Database::connect();
+        $db->beginTransaction();
+
+        try {
+            // Check if checked in
+            $stmt = $db->prepare("SELECT status FROM event_registrations WHERE registration_id = :reg AND event_id = :evt FOR UPDATE");
+            $stmt->execute([':reg' => $regId, ':evt' => $eventId]);
+            $reg = $stmt->fetch();
+
+            if (!$reg || $reg['status'] !== 'checked_in') {
+                $db->rollBack();
+                Response::error('Participant is not checked in', 400);
+            }
+
+            // ── Reset registration status ──
+            $db->prepare("UPDATE event_registrations SET status = 'confirmed' WHERE registration_id = :id")
+               ->execute([':id' => $regId]);
+
+            // ── Remove the latest check_in log entry ──
+            // Using a subquery/limit to ensure we only remove the check_in
+            $db->prepare("DELETE FROM attendance_logs WHERE registration_id = :id AND check_type = 'check_in' ORDER BY scanned_at DESC LIMIT 1")
+               ->execute([':id' => $regId]);
+
+            $db->commit();
+            Response::success(null, 'Check-in cancelled and reverted successfully');
+        } catch (Exception $e) {
+            $db->rollBack();
+            Response::error('Failed to undo check-in', 500);
+        }
+    }
 }

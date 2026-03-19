@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Users, Trophy, MapPin, Ticket, ChevronRight, Sparkles, Zap, Star, Menu, X, ArrowRight, Clock, Award, Wallet } from 'lucide-react'
+import Hero3D from '../components/Hero3D'
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import LoadingScreen from '../components/LoadingScreen'
 
 /* ─── Countdown Hook ─── */
 function useCountdown(targetDate) {
@@ -88,74 +91,93 @@ function Navbar() {
   )
 }
 
-/* ═══════════════════════════════════════════════ */
-/*              HERO SECTION                       */
-/* ═══════════════════════════════════════════════ */
+/* ─── FadeIn View ─── */
+const FadeIn = ({ children, delay = 0, y = 20 }) => (
+  <motion.div
+    initial={{ opacity: 0, y }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ duration: 0.8, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+  >
+    {children}
+  </motion.div>
+)
+
 function Hero() {
   const countdown = useCountdown('2026-04-15T09:00:00')
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-nexus-400/5 blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-accent-500/5 blur-[100px]" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-nexus-400/20 to-transparent" />
-      </div>
-
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-nexus-400/10 border border-nexus-400/20 mb-8 animate-slide-up">
-          <Sparkles size={14} className="text-nexus-400" />
-          <span className="text-sm text-nexus-400 font-medium">April 15–17, 2026 • Pune, India</span>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black font-display mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">Nexus</span>
-          <span className="bg-gradient-to-r from-nexus-400 to-accent-400 bg-clip-text text-transparent">Fest</span>
-          <span className="bg-gradient-to-r from-gray-400 to-gray-500 bg-clip-text text-transparent block text-3xl sm:text-4xl lg:text-5xl mt-2 font-bold">2026</span>
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up leading-relaxed" style={{ animationDelay: '0.2s' }}>
-          Where <span className="text-nexus-400 font-semibold">Innovation</span> Meets <span className="text-accent-400 font-semibold">Celebration</span>.
-          The unified college event management ecosystem.
-        </p>
-
-        {/* Countdown */}
-        <div className="flex justify-center gap-3 sm:gap-5 mb-12 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          {[
-            { value: countdown.days, label: 'Days' },
-            { value: countdown.hours, label: 'Hours' },
-            { value: countdown.minutes, label: 'Minutes' },
-            { value: countdown.seconds, label: 'Seconds' },
-          ].map(({ value, label }) => (
-            <div key={label} className="w-20 sm:w-24 py-4 sm:py-5 rounded-2xl bg-surface-700/60 backdrop-blur-sm border border-white/10 hover:border-nexus-400/30 transition-all group hover:shadow-[0_0_20px_rgba(6,232,225,0.15)]">
-              <div className="text-2xl sm:text-4xl font-bold font-display text-white group-hover:text-nexus-400 transition-colors">
-                {String(value).padStart(2, '0')}
-              </div>
-              <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider mt-1 font-medium">{label}</div>
+    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        
+        {/* Left: Text Content */}
+        <div className="text-left">
+          <FadeIn>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-nexus-400/10 border border-nexus-400/20 mb-8 backdrop-blur-sm">
+              <Sparkles size={14} className="text-nexus-400" />
+              <span className="text-sm text-nexus-400 font-medium">April 15–17, 2026 • Pune, India</span>
             </div>
-          ))}
+          </FadeIn>
+
+          <FadeIn delay={0.1}>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black font-display mb-6 tracking-tight leading-[1.1]">
+              <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">Nexus</span>
+              <span className="bg-gradient-to-r from-nexus-400 to-accent-400 bg-clip-text text-transparent">Fest</span>
+              <span className="block text-gray-500 mt-2 font-bold text-4xl lg:text-5xl italic opacity-50">Evolutionizing Fests.</span>
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <p className="text-lg text-gray-400 max-w-xl mb-12 leading-relaxed">
+              Experience the unified college event management ecosystem. Where <span className="text-nexus-400 font-semibold">Innovation</span> meets <span className="text-accent-400 font-semibold">Celebration</span> in an immersive digital world.
+            </p>
+          </FadeIn>
+
+          {/* Countdown Card */}
+          <FadeIn delay={0.3}>
+            <div className="flex flex-wrap gap-4 mb-12">
+              {[
+                { value: countdown.days, label: 'Days' },
+                { value: countdown.hours, label: 'Hrs' },
+                { value: countdown.minutes, label: 'Min' },
+                { value: countdown.seconds, label: 'Sec' },
+              ].map(({ value, label }) => (
+                <div key={label} className="w-16 sm:w-20 py-3 rounded-2xl bg-surface-800/80 backdrop-blur-md border border-white/5 hover:border-nexus-400/30 transition-all text-center">
+                  <div className="text-xl sm:text-2xl font-bold font-display text-white">
+                    {String(value).padStart(2, '0')}
+                  </div>
+                  <div className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5 font-bold">{label}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.4}>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/login" className="group px-8 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(6,232,225,0.4)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+                Join Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link to="/events" className="px-8 py-4 border border-white/10 rounded-2xl text-white font-bold text-lg hover:bg-white/5 hover:border-white/20 transition-all duration-300 flex items-center justify-center">
+                Explore Events
+              </Link>
+            </div>
+          </FadeIn>
         </div>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <Link to="/login" className="group px-8 py-4 bg-gradient-to-r from-nexus-400 to-accent-500 rounded-2xl text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(6,232,225,0.35)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-            Register Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link to="/events" className="px-8 py-4 border-2 border-nexus-400/40 rounded-2xl text-nexus-400 font-bold text-lg hover:bg-nexus-400/10 hover:border-nexus-400 transition-all duration-300 flex items-center justify-center">
-            Explore Events
-          </Link>
-        </div>
+        {/* Right: 3D Visualization */}
+        <FadeIn delay={0.2} y={0}>
+          <div className="relative h-[500px] w-full hidden lg:block">
+            <div className="absolute inset-0 bg-nexus-400/10 blur-[150px] rounded-full animate-pulse-glow" style={{ animationDuration: '4s' }} />
+            <Hero3D />
+          </div>
+        </FadeIn>
       </div>
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500 animate-float">
-        <span className="text-xs tracking-wider uppercase">Scroll</span>
-        <div className="w-5 h-8 rounded-full border-2 border-gray-600 flex justify-center pt-1.5">
-          <div className="w-1 h-2 bg-gray-500 rounded-full animate-bounce" />
+        <span className="text-xs tracking-wider uppercase font-bold text-gray-600">Scroll</span>
+        <div className="w-5 h-8 rounded-full border-2 border-white/10 flex justify-center pt-1.5 backdrop-blur-md">
+          <div className="w-1 h-2 bg-nexus-400 rounded-full animate-bounce" />
         </div>
       </div>
     </section>
@@ -426,10 +448,40 @@ function Footer() {
 /*              LANDING PAGE                       */
 /* ═══════════════════════════════════════════════ */
 export default function LandingPage() {
+  const [loading, setLoading] = useState(true)
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1200)
+    return () => clearTimeout(t)
+  }, [])
+
+  const springX = useSpring(mouseX, { stiffness: 100, damping: 30 })
+  const springY = useSpring(mouseY, { stiffness: 100, damping: 30 })
+
+  const rotateX = useTransform(springY, [-0.5, 0.5], [5, -5])
+  const rotateY = useTransform(springX, [-0.5, 0.5], [-5, 5])
+  const translateX = useTransform(springX, [-0.5, 0.5], [-20, 20])
+  const translateY = useTransform(springY, [-0.5, 0.5], [-20, 20])
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseX.set((e.clientX / window.innerWidth) - 0.5)
+      mouseY.set((e.clientY / window.innerHeight) - 0.5)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [mouseX, mouseY])
+
+  if (loading) return <LoadingScreen />
+
   return (
-    <div className="min-h-screen bg-surface-900">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
-      <Hero />
+      <motion.div style={{ rotateX, rotateY, x: translateX, y: translateY }}>
+        <Hero />
+      </motion.div>
       <FeatureStats />
       <FeaturedEvents />
       <HowItWorks />

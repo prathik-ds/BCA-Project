@@ -2,6 +2,9 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Clock, MapPin, Trophy, Users, Filter, ChevronRight, X, SlidersHorizontal, CheckCircle, Loader2 } from 'lucide-react'
 import api from '../api/axios'
+import { motion, AnimatePresence } from 'framer-motion'
+import LoadingScreen from '../components/LoadingScreen'
+import toast from 'react-hot-toast'
 
 const categories = ['all', 'technical', 'cultural', 'sports', 'gaming', 'academic']
 const scopes = ['all', 'intra_college', 'inter_college', 'open']
@@ -40,7 +43,8 @@ export default function EventsPage() {
       } catch (err) {
         console.error('Failed to fetch events:', err)
       } finally {
-        setLoading(false)
+        // Artifical delay for smooth entrance
+        setTimeout(() => setLoading(false), 800)
       }
     }
     fetchEvents()
@@ -123,16 +127,20 @@ export default function EventsPage() {
 
       {/* Events Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-nexus-400" size={40} />
-          <p className="text-gray-500 animate-pulse">Syncing with Nexus Grid...</p>
-        </div>
+        <LoadingScreen />
       ) : filtered.length > 0 ? (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <AnimatePresence mode='popLayout'>
           {filtered.map((evt, i) => (
-            <div key={evt.event_id}
-              className="group p-5 rounded-2xl bg-surface-700/30 border border-white/5 hover:border-white/15 hover:bg-surface-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up"
-              style={{ animationDelay: `${i * 0.04}s` }}>
+            <motion.div 
+              key={evt.event_id}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
+              className="group p-5 rounded-2xl bg-surface-700/30 border border-white/5 hover:border-white/15 hover:bg-surface-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
               {/* Badges */}
               <div className="flex items-center gap-2 mb-3">
                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${categoryColors[evt.category_name?.toLowerCase()] || 'bg-white/5 text-gray-400'}`}>
@@ -194,7 +202,6 @@ export default function EventsPage() {
                               if (myReg && myReg.registration_id) {
                                 if (!isConfirming) {
                                   setConfirmUnregisterId(evt.event_id);
-                                  // Auto reset confirm status after 3 seconds
                                   setTimeout(() => {
                                       setConfirmUnregisterId(prev => prev === evt.event_id ? null : prev);
                                   }, 3000);
@@ -205,14 +212,14 @@ export default function EventsPage() {
                                   await api.delete(`/registrations/${myReg.registration_id}`);
                                   setMyRegistrations(prev => prev.filter(r => Number(r.event_id) !== Number(evt.event_id)));
                                   setConfirmUnregisterId(null);
-                                  // Instantly decrement count on UI
+                                  toast.success("Registration cancelled");
                                   setEvents(prev => prev.map(e => Number(e.event_id) === Number(evt.event_id) ? {...e, registered_count: Math.max(0, (e.registered_count || e.registration_count || 1) - 1)} : e));
                                 } catch(err) {
-                                  alert(err.response?.data?.message || 'Cancellation failed');
+                                  toast.error(err.response?.data?.message || 'Cancellation failed');
                                   setConfirmUnregisterId(null);
                                 }
                               } else {
-                                alert("Please refresh the page to cancel a newly added registration.");
+                                toast.error("Please refresh the page to cancel.");
                               }
                             }}
                             className={`w-full py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
@@ -235,10 +242,11 @@ export default function EventsPage() {
                             try {
                               const res = await api.post('/registrations', { event_id: evt.event_id });
                               setMyRegistrations(prev => [...prev, { event_id: evt.event_id, registration_id: res.data?.data?.registration_id }]);
+                              toast.success(`You're in! Registered for ${evt.event_name}`);
                               // Instantly increment count on UI
                               setEvents(prev => prev.map(e => Number(e.event_id) === Number(evt.event_id) ? {...e, registered_count: (e.registered_count || e.registration_count || 0) + 1} : e));
                             } catch(err) {
-                              alert(err.response?.data?.message || 'Registration failed');
+                              toast.error(err.response?.data?.message || 'Registration failed');
                             }
                           }}
                           className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500">
@@ -247,8 +255,9 @@ export default function EventsPage() {
                       )
                 )
               })()}
-            </div>
+            </motion.div>
           ))}
+          </AnimatePresence>
         </div>
       ) : (
         <div className="text-center py-20">

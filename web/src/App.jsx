@@ -17,11 +17,31 @@ import AdminEventsPage from './pages/AdminEventsPage'
 import AdminUsersPage from './pages/AdminUsersPage'
 import AdminResultsPage from './pages/AdminResultsPage'
 import AdminViewResultsPage from './pages/AdminViewResultsPage'
+import CoordinatorLayout from './layouts/CoordinatorLayout'
+import CoordinatorDashboardPage from './pages/CoordinatorDashboardPage'
+import CoordinatorEventsPage from './pages/CoordinatorEventsPage'
+import CoordinatorResultsPage from './pages/CoordinatorResultsPage'
+
+import { Toaster } from 'react-hot-toast'
+import ParticleBackground from './components/ParticleBackground'
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <div className="relative min-h-screen">
+        <ParticleBackground />
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            style: {
+              background: '#1e293b',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+            }
+          }}
+        />
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -48,7 +68,16 @@ function App() {
           <Route path="/admin/results" element={<AdminResultsPage />} />
           <Route path="/admin/results/view" element={<AdminViewResultsPage />} />
         </Route>
+
+        {/* Coordinator Portal */}
+        <Route element={<CoordinatorLayout />}>
+          <Route path="/coordinator/dashboard" element={<CoordinatorDashboardPage />} />
+          <Route path="/coordinator/events" element={<CoordinatorEventsPage />} />
+          <Route path="/coordinator/results" element={<CoordinatorResultsPage />} />
+          <Route path="/coordinator/scanner" element={<QRScannerPage />} />
+        </Route>
       </Routes>
+      </div>
     </BrowserRouter>
   )
 }

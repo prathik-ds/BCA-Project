@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, User, Building2, Phone, ChevronLeft, AlertCircle } from 'lucide-react'
 import api from '../api/axios'
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false)
@@ -41,7 +42,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-900 flex">
+    <div className="min-h-screen bg-transparent flex">
       {/* Left Panel — Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-br from-surface-800 to-surface-900" />

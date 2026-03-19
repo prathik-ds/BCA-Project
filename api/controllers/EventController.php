@@ -65,7 +65,7 @@ class EventController
             SELECT e.event_id, e.event_name, e.slug, e.description, e.event_type,
                    e.scope, e.start_datetime, e.end_datetime, e.registration_deadline,
                    e.min_team_size, e.max_team_size, e.max_participants, e.entry_fee,
-                   e.prize_pool, e.banner_image, e.status,
+                   e.prize_pool, e.banner_image, e.status, e.coordinator_id,
                    ec.category_name,
                    v.venue_name, v.building,
                    (SELECT COUNT(*) FROM event_registrations r 

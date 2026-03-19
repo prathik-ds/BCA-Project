@@ -11,19 +11,25 @@ export default function AdminEventsPage() {
   const [error, setError] = useState('');
   const emptyForm = {
     event_name: '', description: '', category_id: '1', event_type: 'solo', scope: 'intra_college',
-    start_datetime: '', end_datetime: '', entry_fee: '0', max_participants: '100', status: 'published'
+    start_datetime: '', end_datetime: '', entry_fee: '0', max_participants: '100', status: 'published',
+    coordinator_id: ''
   };
   const [form, setForm] = useState(emptyForm);
   const [showRegsModal, setShowRegsModal] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loadingRegs, setLoadingRegs] = useState(false);
+  const [coordinators, setCoordinators] = useState([]);
 
   const loadEvents = async () => {
     setLoading(true);
     try {
       const res = await api.get('/events');
       setEvents(res.data.data || []);
+      
+      const uRes = await api.get('/admin/users');
+      const allUsers = uRes.data.data || [];
+      setCoordinators(allUsers.filter(u => u.role === 'coordinator'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,6 +61,7 @@ export default function AdminEventsPage() {
       entry_fee: String(event.entry_fee || '0'),
       max_participants: String(event.max_participants || '100'),
       status: event.status || 'published',
+      coordinator_id: String(event.coordinator_id || ''),
     });
     setError('');
     setShowModal(true);
@@ -70,6 +77,7 @@ export default function AdminEventsPage() {
       category_id: parseInt(form.category_id),
       entry_fee: parseFloat(form.entry_fee),
       max_participants: parseInt(form.max_participants),
+      coordinator_id: form.coordinator_id ? parseInt(form.coordinator_id) : null,
       start_datetime: form.start_datetime.replace('T', ' ') + (form.start_datetime.length === 16 ? ':00' : ''),
       end_datetime: form.end_datetime.replace('T', ' ') + (form.end_datetime.length === 16 ? ':00' : ''),
     };
@@ -286,6 +294,17 @@ export default function AdminEventsPage() {
                   <input type="number" name="max_participants" value={form.max_participants} onChange={handleChange} min="1"
                     className="w-full bg-surface-900 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition" />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1.5 ml-1">Assigned Coordinator</label>
+                <select name="coordinator_id" value={form.coordinator_id} onChange={handleChange}
+                  className="w-full bg-surface-900 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition">
+                  <option value="">-- No Coordinator Assigned --</option>
+                  {coordinators.map(c => (
+                    <option key={c.user_id} value={c.user_id}>{c.first_name} {c.last_name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
