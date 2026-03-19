@@ -34,6 +34,7 @@ require_once __DIR__ . '/controllers/WalletController.php';
 require_once __DIR__ . '/controllers/ResultController.php';
 require_once __DIR__ . '/controllers/CertificateController.php';
 require_once __DIR__ . '/controllers/LeaderboardController.php';
+require_once __DIR__ . '/controllers/AdminController.php';
 
 // ── Load & Run Routes ──
 require_once __DIR__ . '/routes/api.php';

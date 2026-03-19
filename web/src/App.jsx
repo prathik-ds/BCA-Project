@@ -13,6 +13,9 @@ import ProfilePage from './pages/ProfilePage'
 import QRScannerPage from './pages/QRScannerPage'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import AdminEventsPage from './pages/AdminEventsPage'
+import AdminUsersPage from './pages/AdminUsersPage'
+import AdminResultsPage from './pages/AdminResultsPage'
 
 function App() {
   return (
@@ -22,9 +25,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected routes with dashboard layout */}
+        {/* Student/Participant Portal */}
         <Route element={<DashboardLayout />}>
-          {/* ── Participant Portal ── */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventsPage />} />
@@ -34,21 +36,15 @@ function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/certificates" element={<CertificatesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-
-          {/* ── Coordinator Tools ── */}
           <Route path="/scanner" element={<QRScannerPage />} />
         </Route>
 
-        {/* ── Admin Portal ── */}
+        {/* Admin Portal */}
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/users" element={<AdminDashboardPage />} />
-          <Route path="/admin/events" element={<AdminDashboardPage />} />
-          <Route path="/admin/finance" element={<AdminDashboardPage />} />
-          <Route path="/admin/reports" element={<AdminDashboardPage />} />
-          <Route path="/admin/announcements" element={<AdminDashboardPage />} />
-          <Route path="/admin/logs" element={<AdminDashboardPage />} />
-          <Route path="/admin/settings" element={<AdminDashboardPage />} />
+          <Route path="/admin/events" element={<AdminEventsPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/results" element={<AdminResultsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

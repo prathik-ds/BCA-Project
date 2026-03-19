@@ -94,8 +94,10 @@ class AuthMiddleware
             ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
             ?? '';
 
-        // Apache sometimes strips the header; also check apache_request_headers()
-        if (empty($authHeader) && function_exists('apache_request_headers')) {
+        if (empty($authHeader) && function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        } else if (empty($authHeader) && function_exists('apache_request_headers')) {
             $headers = apache_request_headers();
             $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
         }

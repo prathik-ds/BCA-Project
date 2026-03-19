@@ -159,20 +159,24 @@ export default function EventsPage() {
               {/* Entry fee + Registration bar */}
               <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                 <span>{evt.entry_fee > 0 ? `₹${evt.entry_fee} entry` : '🎉 Free entry'}</span>
-                <span>{evt.registration_count}/{evt.max_participants}</span>
+                <span>{(evt.registered_count || evt.registration_count || 0)}/{evt.max_participants}</span>
               </div>
               <div className="w-full h-1.5 bg-surface-500 rounded-full overflow-hidden mb-4">
                 <div className="h-full bg-gradient-to-r from-nexus-400 to-accent-500 rounded-full transition-all duration-700"
-                  style={{ width: `${(evt.registration_count / evt.max_participants) * 100}%` }} />
+                  style={{ width: `${((evt.registered_count || evt.registration_count || 0) / (evt.max_participants || 1)) * 100}%` }} />
               </div>
 
               {/* CTA */}
               <button 
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setRegisteredId(evt.event_id);
-                  setTimeout(() => setRegisteredId(null), 3000);
+                  try {
+                    await api.post('/registrations', { event_id: evt.event_id });
+                    setRegisteredId(evt.event_id);
+                  } catch(err) {
+                    alert(err.response?.data?.message || 'Registration failed');
+                  }
                 }}
                 disabled={registeredId === evt.event_id}
                 className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn ${

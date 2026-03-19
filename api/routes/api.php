@@ -72,6 +72,9 @@ $routes = [
     'POST /api/v1/certificates/generate'       => ['CertificateController', 'generate'],
     'POST /api/v1/certificates/bulk-generate'  => ['CertificateController', 'bulkGenerate'],
     // Certificate download and verify handled below via regex
+
+    // ── Admin ──
+    'GET  /api/v1/admin/users'                 => ['AdminController', 'getUsers'],
 ];
 
 
@@ -118,6 +121,9 @@ $paramRoutes = [
     // Certificates
     ['GET',    '#^/api/v1/certificates/(\d+)/download$#',               'CertificateController', 'download'],
     ['GET',    '#^/api/v1/certificates/verify/([A-Za-z0-9\-]+)$#',      'CertificateController', 'verify'],
+
+    // Admin
+    ['GET',    '#^/api/v1/admin/events/(\d+)/registrations$#',          'AdminController',       'getEventRegistrations'],
 ];
 
 foreach ($paramRoutes as [$routeMethod, $regex, $controller, $action]) {
