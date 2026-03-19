@@ -25,8 +25,8 @@ export default function EventsPage() {
   const [scope, setScope] = useState('all')
   const [type, setType] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
-  const [registeredId, setRegisteredId] = useState(null)
   const [myRegistrations, setMyRegistrations] = useState([])
+  const [confirmUnregisterId, setConfirmUnregisterId] = useState(null)
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -130,7 +130,7 @@ export default function EventsPage() {
       ) : filtered.length > 0 ? (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((evt, i) => (
-            <Link to={`/events/${evt.event_id}`} key={evt.event_id}
+            <div key={evt.event_id}
               className="group p-5 rounded-2xl bg-surface-700/30 border border-white/5 hover:border-white/15 hover:bg-surface-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up"
               style={{ animationDelay: `${i * 0.04}s` }}>
               {/* Badges */}
@@ -173,57 +173,81 @@ export default function EventsPage() {
 
               {/* CTA */}
               {(() => {
-                const myReg = myRegistrations.find(r => r.event_id === evt.event_id);
-                const isRegistered = !!myReg || registeredId === evt.event_id;
+                const myReg = myRegistrations.find(r => Number(r.event_id) === Number(evt.event_id));
+                const isRegistered = !!myReg;
+                const isConfirming = confirmUnregisterId === evt.event_id;
                 
                 return (
-                  <button 
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      if (isRegistered) {
-                        // Unregister
-                        if (myReg && myReg.registration_id) {
-                          if (!window.confirm("Are you sure you want to cancel your registration?")) return;
-                          try {
-                            await api.delete(`/registrations/${myReg.registration_id}`);
-                            setMyRegistrations(prev => prev.filter(r => r.event_id !== evt.event_id));
-                            setRegisteredId(null);
-                          } catch(err) {
-                            alert(err.response?.data?.message || 'Cancellation failed');
-                          }
-                        } else {
-                          alert("Please refresh the page to cancel a newly added registration.");
-                        }
-                      } else {
-                        // Register
-                        try {
-                          const res = await api.post('/registrations', { event_id: evt.event_id });
-                          setMyRegistrations(prev => [...prev, { event_id: evt.event_id, registration_id: res.data?.data?.registration_id }]);
-                          setRegisteredId(evt.event_id);
-                        } catch(err) {
-                          alert(err.response?.data?.message || 'Registration failed');
-                        }
-                      }
-                    }}
-                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn ${
-                      isRegistered 
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30' 
-                        : 'bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500'
-                    }`}>
-                    {isRegistered ? (
-                      <>
-                        <span className="group-hover/btn:hidden flex items-center gap-2"><CheckCircle size={14} /> Registered!</span>
-                        <span className="hidden group-hover/btn:flex items-center gap-2"><X size={14} /> Unregister</span>
-                      </>
-                    ) : (
-                      <>Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" /></>
-                    )}
-                  </button>
+                      isRegistered ? (
+                        <div className="space-y-2">
+                          {/* Success Indicator */}
+                          <div className="w-full py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-default">
+                            <CheckCircle size={14} /> Registered!
+                          </div>
+                          
+                          {/* Separate Unregister Button */}
+                          <button 
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              if (myReg && myReg.registration_id) {
+                                if (!isConfirming) {
+                                  setConfirmUnregisterId(evt.event_id);
+                                  // Auto reset confirm status after 3 seconds
+                                  setTimeout(() => {
+                                      setConfirmUnregisterId(prev => prev === evt.event_id ? null : prev);
+                                  }, 3000);
+                                  return;
+                                }
+
+                                try {
+                                  await api.delete(`/registrations/${myReg.registration_id}`);
+                                  setMyRegistrations(prev => prev.filter(r => Number(r.event_id) !== Number(evt.event_id)));
+                                  setConfirmUnregisterId(null);
+                                  // Instantly decrement count on UI
+                                  setEvents(prev => prev.map(e => Number(e.event_id) === Number(evt.event_id) ? {...e, registered_count: Math.max(0, (e.registered_count || e.registration_count || 1) - 1)} : e));
+                                } catch(err) {
+                                  alert(err.response?.data?.message || 'Cancellation failed');
+                                  setConfirmUnregisterId(null);
+                                }
+                              } else {
+                                alert("Please refresh the page to cancel a newly added registration.");
+                              }
+                            }}
+                            className={`w-full py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                              isConfirming 
+                                ? 'bg-red-500 text-white border border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                                : 'text-gray-500 hover:text-red-400 hover:bg-red-400/5 transition-all'
+                            }`}>
+                            {isConfirming ? (
+                              <>Click to Confirm Cancel <X size={12} /></>
+                            ) : (
+                              <>Unregister from Event <X size={12} /></>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              const res = await api.post('/registrations', { event_id: evt.event_id });
+                              setMyRegistrations(prev => [...prev, { event_id: evt.event_id, registration_id: res.data?.data?.registration_id }]);
+                              // Instantly increment count on UI
+                              setEvents(prev => prev.map(e => Number(e.event_id) === Number(evt.event_id) ? {...e, registered_count: (e.registered_count || e.registration_count || 0) + 1} : e));
+                            } catch(err) {
+                              alert(err.response?.data?.message || 'Registration failed');
+                            }
+                          }}
+                          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500">
+                          Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                      )
                 )
               })()}
-            </Link>
+            </div>
           ))}
         </div>
       ) : (

@@ -14,6 +14,10 @@ export default function AdminEventsPage() {
     start_datetime: '', end_datetime: '', entry_fee: '0', max_participants: '100', status: 'published'
   };
   const [form, setForm] = useState(emptyForm);
+  const [showRegsModal, setShowRegsModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [registrations, setRegistrations] = useState([]);
+  const [loadingRegs, setLoadingRegs] = useState(false);
 
   const loadEvents = async () => {
     setLoading(true);
@@ -95,6 +99,62 @@ export default function AdminEventsPage() {
     }
   };
 
+  const openRegistrations = async (eventId) => {
+    setSelectedEventId(eventId);
+    setShowRegsModal(true);
+    setLoadingRegs(true);
+    try {
+      const res = await api.get(`/admin/events/${eventId}/registrations`);
+      setRegistrations(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingRegs(false);
+    }
+  };
+
+  const cancelRegistration = async (regId) => {
+    if (!confirm('Are you sure you want to cancel this registration?')) return;
+    try {
+      await api.delete(`/registrations/${regId}`);
+      // Refresh regs list
+      const res = await api.get(`/admin/events/${selectedEventId}/registrations`);
+      setRegistrations(res.data.data || []);
+      // Also refresh main events list to update counts
+      loadEvents();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error cancelling registration');
+    }
+  };
+
+  const handleExport = () => {
+    if (registrations.length === 0) return;
+    
+    const headers = ['Name', 'Email', 'College', 'Status', 'Registered At'];
+    const rows = registrations.map(r => [
+      `${r.first_name} ${r.last_name}`,
+      r.email,
+      r.college_name,
+      r.status,
+      new Date(r.registered_at).toLocaleString()
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `participants_event_${selectedEventId}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
@@ -154,6 +214,7 @@ export default function AdminEventsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      <button onClick={() => openRegistrations(event.event_id)} className="px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 text-xs text-gray-300 hover:text-white transition">Participants</button>
                       <button onClick={() => openEdit(event)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition"><Edit2 size={16} /></button>
                       <button onClick={() => handleDelete(event.event_id)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-red-500 transition"><Trash2 size={16} /></button>
                     </div>
@@ -256,6 +317,86 @@ export default function AdminEventsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Registrations Modal */}
+      {showRegsModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-800 rounded-2xl max-w-4xl w-full border border-white/10 max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-white/5">
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-bold text-white">Event Participants</h2>
+                <button onClick={() => openRegistrations(selectedEventId)} disabled={loadingRegs}
+                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all">
+                  <div className={loadingRegs ? 'animate-spin' : ''}>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                  </div>
+                </button>
+                {registrations.length > 0 && (
+                  <button onClick={handleExport}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-bold rounded-lg transition-all ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download CSV
+                  </button>
+                )}
+              </div>
+              <button onClick={() => setShowRegsModal(false)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400"><X size={20}/></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingRegs ? (
+                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-500" size={32}/></div>
+              ) : registrations.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">No one has registered for this event yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="text-gray-400 border-b border-white/5">
+                      <tr>
+                        <th className="pb-3 px-2">Participant</th>
+                        <th className="pb-3 px-2">College</th>
+                        <th className="pb-3 px-2">Date Registered</th>
+                        <th className="pb-3 px-2">Status</th>
+                        <th className="pb-3 px-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {registrations.map(reg => (
+                        <tr key={reg.registration_id} className="hover:bg-white/5 transition">
+                          <td className="py-4 px-2">
+                            <div className="font-bold text-white">{reg.first_name} {reg.last_name}</div>
+                            <div className="text-xs text-gray-500">{reg.email}</div>
+                          </td>
+                          <td className="py-4 px-2 text-gray-400">{reg.college_name}</td>
+                          <td className="py-4 px-2 text-gray-400">
+                            {new Date(reg.registered_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </td>
+                          <td className="py-4 px-2">
+                             <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold ${
+                               reg.status === 'confirmed' ? 'bg-green-500/10 text-green-400' :
+                               reg.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
+                               'bg-amber-500/10 text-amber-400'
+                             }`}>
+                               {reg.status}
+                             </span>
+                          </td>
+                          <td className="py-4 px-2 text-right">
+                            {reg.status !== 'cancelled' && (
+                              <button onClick={() => cancelRegistration(reg.registration_id)}
+                                className="text-xs font-bold text-red-500 hover:text-red-400 underline transition">
+                                Cancel
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

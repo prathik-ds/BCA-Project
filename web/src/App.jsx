@@ -5,10 +5,10 @@ import DashboardLayout from './layouts/DashboardLayout'
 import DashboardPage from './pages/DashboardPage'
 import EventsPage from './pages/EventsPage'
 import TeamsPage from './pages/TeamsPage'
-import WalletPage from './pages/WalletPage'
 import SchedulePage from './pages/SchedulePage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import CertificatesPage from './pages/CertificatesPage'
+import ResultsPage from './pages/ResultsPage'
 import ProfilePage from './pages/ProfilePage'
 import QRScannerPage from './pages/QRScannerPage'
 import AdminLayout from './layouts/AdminLayout'
@@ -31,10 +31,10 @@ function App() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:id" element={<EventsPage />} />
           <Route path="/teams" element={<TeamsPage />} />
-          <Route path="/wallet" element={<WalletPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/certificates" element={<CertificatesPage />} />
+          <Route path="/results" element={<ResultsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/scanner" element={<QRScannerPage />} />
         </Route>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Users, Wallet, Award, Clock, MapPin, ArrowRight, CheckCircle, Loader2 } from 'lucide-react'
+import { Calendar, Users, Award, Clock, MapPin, ArrowRight, CheckCircle, Loader2 } from 'lucide-react'
 import api from '../api/axios'
 
 const categoryColors = {

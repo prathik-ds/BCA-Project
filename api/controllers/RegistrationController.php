@@ -49,11 +49,13 @@ class RegistrationController
 
         // ── Check duplicate registration ──
         $stmt = $db->prepare("
-            SELECT registration_id FROM event_registrations
-            WHERE user_id = :user AND event_id = :event AND status != 'cancelled'
+            SELECT registration_id, status FROM event_registrations
+            WHERE user_id = :user AND event_id = :event
         ");
         $stmt->execute([':user' => $auth['user_id'], ':event' => $eventId]);
-        if ($stmt->fetch()) {
+        $existing = $stmt->fetch();
+
+        if ($existing && $existing['status'] !== 'cancelled') {
             Response::error('You are already registered for this event', 409);
         }
 
@@ -76,25 +78,42 @@ class RegistrationController
         // ── Generate QR token ──
         $qrToken = QRCodeHelper::generateToken('registration', 0);
 
-        // ── Insert registration ──
+        // ── Insert or Update registration ──
         $db->beginTransaction();
         try {
-            $stmt = $db->prepare("
-                INSERT INTO event_registrations 
-                    (user_id, event_id, team_id, status, payment_status, amount_paid, qr_token)
-                VALUES (:user, :event, :team, :status, :pay_status, :amount, :qr)
-            ");
-            $stmt->execute([
-                ':user'       => $auth['user_id'],
-                ':event'      => $eventId,
-                ':team'       => $teamId,
-                ':status'     => $status,
-                ':pay_status' => $paymentStatus,
-                ':amount'     => ($paymentStatus === 'not_required') ? 0.00 : (float) $event['entry_fee'],
-                ':qr'         => $qrToken,
-            ]);
-
-            $regId = (int) $db->lastInsertId();
+            if ($existing) {
+                $stmt = $db->prepare("
+                    UPDATE event_registrations 
+                    SET team_id = :team, status = :status, payment_status = :pay_status, 
+                        amount_paid = :amount, qr_token = :qr, updated_at = CURRENT_TIMESTAMP
+                    WHERE registration_id = :id
+                ");
+                $stmt->execute([
+                    ':id'         => $existing['registration_id'],
+                    ':team'       => $teamId,
+                    ':status'     => $status,
+                    ':pay_status' => $paymentStatus,
+                    ':amount'     => ($paymentStatus === 'not_required') ? 0.00 : (float) $event['entry_fee'],
+                    ':qr'         => $qrToken,
+                ]);
+                $regId = $existing['registration_id'];
+            } else {
+                $stmt = $db->prepare("
+                    INSERT INTO event_registrations 
+                        (user_id, event_id, team_id, status, payment_status, amount_paid, qr_token)
+                    VALUES (:user, :event, :team, :status, :pay_status, :amount, :qr)
+                ");
+                $stmt->execute([
+                    ':user'       => $auth['user_id'],
+                    ':event'      => $eventId,
+                    ':team'       => $teamId,
+                    ':status'     => $status,
+                    ':pay_status' => $paymentStatus,
+                    ':amount'     => ($paymentStatus === 'not_required') ? 0.00 : (float) $event['entry_fee'],
+                    ':qr'         => $qrToken,
+                ]);
+                $regId = (int) $db->lastInsertId();
+            }
 
             // Update QR token with actual registration ID
             $qrToken = QRCodeHelper::generateToken('registration', $regId);
@@ -140,7 +159,7 @@ class RegistrationController
             JOIN event_categories ec ON e.category_id = ec.category_id
             LEFT JOIN venues v ON e.venue_id = v.venue_id
             LEFT JOIN teams t ON r.team_id = t.team_id
-            WHERE r.user_id = :user
+            WHERE r.user_id = :user AND r.status != 'cancelled'
             ORDER BY e.start_datetime ASC
         ");
         $stmt->execute([':user' => $auth['user_id']]);

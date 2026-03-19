@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
-import { LayoutDashboard, Calendar, Users, Wallet, Trophy, Clock, Award, User, LogOut, Menu, X, Bell, ChevronDown, ScanLine } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Trophy, Clock, Award, User, LogOut, Menu, X, Bell, ChevronDown, ScanLine, Star } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/events', icon: Calendar, label: 'Events' },
   { to: '/teams', icon: Users, label: 'My Teams' },
-  { to: '/wallet', icon: Wallet, label: 'Wallet' },
   { to: '/schedule', icon: Clock, label: 'Schedule' },
   { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+  { to: '/results', icon: Star, label: 'Results' },
   { to: '/certificates', icon: Award, label: 'Certificates' },
   { to: '/profile', icon: User, label: 'Profile' },
   { divider: true, label: 'Coordinator' },

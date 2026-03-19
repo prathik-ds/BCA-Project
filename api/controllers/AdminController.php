@@ -47,7 +47,7 @@ class AdminController
             FROM event_registrations r
             JOIN users u ON r.user_id = u.user_id
             LEFT JOIN colleges c ON u.college_id = c.college_id
-            WHERE r.event_id = :event_id
+            WHERE r.event_id = :event_id AND r.status != 'cancelled'
             ORDER BY r.registered_at DESC
         ");
         $stmt->execute([':event_id' => $eventId]);

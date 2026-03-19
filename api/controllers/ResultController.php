@@ -21,13 +21,11 @@ class ResultController
         $v = new Validator($data);
         $v->required('event_id', 'Event ID')
           ->numeric('event_id', 'Event ID')
-          ->required('position', 'Position')
-          ->in('position', ['first', 'second', 'third', 'runner_up', 'participation', 'disqualified'], 'Position')
+          ->required('winners', 'Winners')
           ->validate();
 
-        // Must have either user_id or team_id
-        if (empty($data['user_id']) && empty($data['team_id'])) {
-            Response::error('Either user_id or team_id is required', 422);
+        if (!is_array($data['winners']) || empty($data['winners'])) {
+            Response::error('Winners list must be a non-empty array', 422);
         }
 
         $db = Database::connect();
@@ -45,52 +43,58 @@ class ResultController
             Response::notFound('Event not found');
         }
 
-        // ── Calculate points based on position ──
-        $pointsMap = [
-            'first'         => (int) $event['points_first'],
-            'second'        => (int) $event['points_second'],
-            'third'         => (int) $event['points_third'],
-            'runner_up'     => (int) round($event['points_third'] * 0.5),
-            'participation' => (int) $event['points_participation'],
-            'disqualified'  => 0,
-        ];
-
-        $pointsAwarded = $pointsMap[$data['position']] ?? 0;
-
         $db->beginTransaction();
         try {
-            // ── Insert result ──
-            $stmt = $db->prepare("
-                INSERT INTO event_results 
-                    (event_id, user_id, team_id, position, score, points_awarded, remarks, declared_by)
-                VALUES (:event, :user, :team, :position, :score, :points, :remarks, :declared_by)
-            ");
-            $stmt->execute([
-                ':event'       => (int) $data['event_id'],
-                ':user'        => $data['user_id'] ?? null,
-                ':team'        => $data['team_id'] ?? null,
-                ':position'    => $data['position'],
-                ':score'       => $data['score'] ?? null,
-                ':points'      => $pointsAwarded,
-                ':remarks'     => $data['remarks'] ?? null,
-                ':declared_by' => $auth['user_id'],
-            ]);
+            // Delete old results for this event to avoid duplicates if re-submitting
+            $db->prepare("DELETE FROM event_results WHERE event_id = :id")
+               ->execute([':id' => $data['event_id']]);
 
-            $resultId = (int) $db->lastInsertId();
+            foreach ($data['winners'] as $winner) {
+                if (empty($winner['user_id']) && empty($winner['team_id'])) continue;
+                
+                $position = $winner['position'] ?? 'participation';
+                
+                // ── Calculate points based on position ──
+                $pointsMap = [
+                    'first'         => (int) $event['points_first'],
+                    'second'        => (int) $event['points_second'],
+                    'third'         => (int) $event['points_third'],
+                    'runner_up'     => (int) round($event['points_third'] * 0.5),
+                    'participation' => (int) $event['points_participation'],
+                    'disqualified'  => 0,
+                ];
 
-            // ── Update leaderboard for the user/team ──
-            if (!empty($data['user_id'])) {
-                self::updateLeaderboard($db, (int) $data['user_id'], $pointsAwarded, $data['position']);
-            }
+                $pointsAwarded = $pointsMap[$position] ?? 0;
 
-            // If team result, update leaderboard for all team members
-            if (!empty($data['team_id'])) {
-                $stmt = $db->prepare("SELECT user_id FROM team_members WHERE team_id = :team");
-                $stmt->execute([':team' => $data['team_id']]);
-                $members = $stmt->fetchAll();
+                // ── Insert result ──
+                $stmt = $db->prepare("
+                    INSERT INTO event_results 
+                        (event_id, user_id, team_id, position, score, points_awarded, remarks, declared_by)
+                    VALUES (:event, :user, :team, :position, :score, :points, :remarks, :declared_by)
+                ");
+                $stmt->execute([
+                    ':event'       => (int) $data['event_id'],
+                    ':user'        => $winner['user_id'] ?? null,
+                    ':team'        => $winner['team_id'] ?? null,
+                    ':position'    => $position,
+                    ':score'       => $winner['score'] ?? null,
+                    ':points'      => $pointsAwarded,
+                    ':remarks'     => $winner['remarks'] ?? null,
+                    ':declared_by' => $auth['user_id'],
+                ]);
 
-                foreach ($members as $member) {
-                    self::updateLeaderboard($db, (int) $member['user_id'], $pointsAwarded, $data['position']);
+                // ── Update leaderboard ──
+                if (!empty($winner['user_id'])) {
+                    self::updateLeaderboard($db, (int) $winner['user_id'], $pointsAwarded, $position);
+                }
+
+                if (!empty($winner['team_id'])) {
+                    $stmt = $db->prepare("SELECT user_id FROM team_members WHERE team_id = :team");
+                    $stmt->execute([':team' => $winner['team_id']]);
+                    $members = $stmt->fetchAll();
+                    foreach ($members as $member) {
+                        self::updateLeaderboard($db, (int) $member['user_id'], $pointsAwarded, $position);
+                    }
                 }
             }
 
@@ -100,12 +104,7 @@ class ResultController
             Response::error('Failed to submit result: ' . $e->getMessage(), 500);
         }
 
-        Response::created([
-            'result_id'      => $resultId,
-            'event_name'     => $event['event_name'],
-            'position'       => $data['position'],
-            'points_awarded' => $pointsAwarded,
-        ], 'Result submitted successfully');
+        Response::created(null, 'Event results updated successfully');
     }
 
     // ────────────────────────────────────────────────
@@ -142,6 +141,47 @@ class ResultController
             'event'   => $event,
             'results' => $stmt->fetchAll(),
         ]);
+    }
+
+    // ────────────────────────────────────────────────
+    //  GET /api/v1/results
+    //  Get list of all events with their winners
+    // ────────────────────────────────────────────────
+    public static function allResults(): void
+    {
+        $db = Database::connect();
+
+        // Get events that have results
+        $stmt = $db->prepare("
+            SELECT DISTINCT e.event_id, e.event_name, ec.category_name, e.start_datetime
+            FROM events e
+            JOIN event_results r ON e.event_id = r.event_id
+            JOIN event_categories ec ON e.category_id = ec.category_id
+            ORDER BY e.start_datetime DESC
+        ");
+        $stmt->execute();
+        $events = $stmt->fetchAll();
+
+        $results = [];
+        foreach ($events as $event) {
+            $stmt = $db->prepare("
+                SELECT r.position, 
+                       COALESCE(u.first_name, t.team_name, 'Unknown') as winner_name,
+                       u.last_name,
+                       c.college_code
+                FROM event_results r
+                LEFT JOIN users u ON r.user_id = u.user_id
+                LEFT JOIN colleges c ON u.college_id = c.college_id
+                LEFT JOIN teams t ON r.team_id = t.team_id
+                WHERE r.event_id = :event AND r.position IN ('first', 'second', 'third')
+                ORDER BY FIELD(r.position, 'first', 'second', 'third')
+            ");
+            $stmt->execute([':event' => $event['event_id']]);
+            $event['winners'] = $stmt->fetchAll();
+            $results[] = $event;
+        }
+
+        Response::success($results, 'Results retrieved');
     }
 
     // ────────────────────────────────────────────────

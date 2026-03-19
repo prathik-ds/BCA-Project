@@ -16,10 +16,18 @@ export default function AdminDashboardPage() {
         setEvents(evts.slice(0, 5))
         
         const totalRegs = evts.reduce((sum, e) => sum + (parseInt(e.registered_count) || 0), 0)
+        
+        // Analytics: Category breakdown
+        const cats = {}
+        evts.forEach(e => {
+          cats[e.category_name] = (cats[e.category_name] || 0) + (parseInt(e.registered_count) || 0)
+        })
+
         setStats({
           totalEvents: evts.length,
           totalUsers: totalRegs,
           totalRegistrations: totalRegs,
+          categories: cats
         })
       } catch (err) {
         console.error('Dashboard load failed:', err)
@@ -117,6 +125,58 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Analytics Section */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Event Popularity */}
+        <div className="p-6 rounded-2xl bg-surface-700/30 border border-white/5 space-y-6">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">Event Popularity (%)</h2>
+          <div className="space-y-4">
+            {events.map((evt, i) => {
+              const perc = Math.min(100, Math.round(((evt.registered_count || 0) / (evt.max_participants || 1)) * 100));
+              return (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-300 font-medium truncate max-w-[70%]">{evt.event_name}</span>
+                    <span className="text-gray-500">{evt.registered_count}/{evt.max_participants}</span>
+                  </div>
+                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-1000" style={{ width: `${perc}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Category Breakdown */}
+        <div className="p-6 rounded-2xl bg-surface-700/30 border border-white/5 flex flex-col">
+          <h2 className="text-lg font-bold text-white mb-6">Category Distribution</h2>
+          <div className="flex-1 flex flex-col justify-center space-y-4">
+            {Object.entries(stats.categories || {}).map(([cat, count], i) => {
+              const total = stats.totalRegistrations || 1;
+              const perc = Math.round((count / total) * 100);
+              const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-amber-500', 'bg-cyan-500'];
+              const color = colors[i % colors.length];
+              
+              return (
+                <div key={cat} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400 capitalize">{cat}</span>
+                    <span className="text-gray-200 font-bold">{perc}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className={`h-full ${color} transition-all duration-1000`} style={{ width: `${perc}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {Object.keys(stats.categories || {}).length === 0 && (
+              <p className="text-center text-gray-500 py-8">No registration data yet.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

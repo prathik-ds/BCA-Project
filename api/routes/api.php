@@ -53,14 +53,11 @@ $routes = [
     'POST /api/v1/attendance/sync'   => ['AttendanceController', 'syncOffline'],
     // Attendance event report with {eventId} handled below via regex
 
-    // ── Wallet ──
-    'GET  /api/v1/wallet/balance'       => ['WalletController', 'balance'],
-    'POST /api/v1/wallet/topup'         => ['WalletController', 'topup'],
-    'POST /api/v1/wallet/pay'           => ['WalletController', 'pay'],
-    'GET  /api/v1/wallet/transactions'  => ['WalletController', 'transactions'],
+
 
     // ── Results ──
     'POST /api/v1/results'           => ['ResultController', 'submit'],
+    'GET  /api/v1/results'            => ['ResultController', 'allResults'],
     // Results by event with {eventId} handled below via regex
 
     // ── Leaderboard ──
