@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, Wallet, Settings, ShieldCheck, LogOut, Menu, X, Bell, Database, FileBarChart, Siren } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, Wallet, Settings, ShieldCheck, LogOut, Menu, X, Bell, Database, FileBarChart, Siren, Trophy } from 'lucide-react'
 
 const adminNavItems = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/events', icon: Calendar, label: 'Event Control' },
   { to: '/admin/users', icon: Users, label: 'Participants' },
-  { to: '/admin/results', icon: ShieldCheck, label: 'Results' },
+  { to: '/admin/results', icon: ShieldCheck, label: 'Declare Results' },
+  { to: '/admin/results/view', icon: Trophy, label: 'Result Preview' },
 ]
 
 export default function AdminLayout() {

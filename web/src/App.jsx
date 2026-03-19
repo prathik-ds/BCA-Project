@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminEventsPage from './pages/AdminEventsPage'
 import AdminUsersPage from './pages/AdminUsersPage'
 import AdminResultsPage from './pages/AdminResultsPage'
+import AdminViewResultsPage from './pages/AdminViewResultsPage'
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="/admin/events" element={<AdminEventsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/results" element={<AdminResultsPage />} />
+          <Route path="/admin/results/view" element={<AdminViewResultsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
