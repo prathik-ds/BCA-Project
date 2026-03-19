@@ -66,8 +66,8 @@ export default function AdminEventsPage() {
       category_id: parseInt(form.category_id),
       entry_fee: parseFloat(form.entry_fee),
       max_participants: parseInt(form.max_participants),
-      start_datetime: form.start_datetime.length === 16 ? form.start_datetime + ':00' : form.start_datetime,
-      end_datetime: form.end_datetime.length === 16 ? form.end_datetime + ':00' : form.end_datetime,
+      start_datetime: form.start_datetime.replace('T', ' ') + (form.start_datetime.length === 16 ? ':00' : ''),
+      end_datetime: form.end_datetime.replace('T', ' ') + (form.end_datetime.length === 16 ? ':00' : ''),
     };
 
     try {

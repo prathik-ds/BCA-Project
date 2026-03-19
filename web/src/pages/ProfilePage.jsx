@@ -1,19 +1,30 @@
-import { useState } from 'react'
-import { User, Mail, Phone, Building2, BookOpen, Edit2, Camera, Save, Calendar, MapPin } from 'lucide-react'
-import QRCodeDisplay from '../components/QRCodeDisplay'
-
-const mockProfile = {
-  user_id: 1, first_name: 'Pratham', last_name: 'Sharma', email: 'pratham@mitadt.edu', phone: '+91 98765 43210', role: 'participant',
-  college: { name: 'MIT ADT University', college_code: 'MITADT', city: 'Pune', state: 'Maharashtra' },
-  department: { dept_name: 'Computer Applications' },
-  qr_token: 'user:1:1741622400:a9f3b2c8d1e0:7b4e2a19f3c6d8e5',
-  stats: { events_registered: 5, events_attended: 3, certificates: 2, wallet_balance: 1250, team_count: 2 },
-  created_at: '2026-02-15',
-}
+import { useState, useEffect } from 'react'
+import { User, Mail, Phone, Building2, Calendar, Save, Edit2, Loader2 } from 'lucide-react'
+import api from '../api/axios'
 
 export default function ProfilePage() {
+  const [user, setUser] = useState(null)
+  const [registrations, setRegistrations] = useState([])
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ first_name: mockProfile.first_name, last_name: mockProfile.last_name, phone: mockProfile.phone })
+  const [form, setForm] = useState({ first_name: '', last_name: '', phone: '' })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('nexus_user')
+    if (stored) {
+      const u = JSON.parse(stored)
+      setUser(u)
+      setForm({ first_name: u.first_name || '', last_name: u.last_name || '', phone: u.phone || '' })
+    }
+    api.get('/registrations/my')
+      .then(res => setRegistrations(res.data.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="flex justify-center py-32"><Loader2 className="animate-spin text-nexus-400" size={48}/></div>
+
+  const initials = (user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -23,21 +34,14 @@ export default function ProfilePage() {
       <div className="relative p-8 rounded-2xl bg-gradient-to-br from-surface-700/60 to-surface-800/40 border border-white/5 overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-nexus-400/5 blur-[60px]" />
         <div className="relative flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-nexus-400 to-accent-500 flex items-center justify-center text-white text-3xl font-bold font-display">{mockProfile.first_name[0]}{mockProfile.last_name[0]}</div>
-            <button className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Camera size={20} className="text-white"/></button>
-          </div>
+          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-nexus-400 to-accent-500 flex items-center justify-center text-white text-3xl font-bold font-display">{initials}</div>
           <div className="text-center sm:text-left flex-1">
-            <h2 className="text-2xl font-bold text-white">{mockProfile.first_name} {mockProfile.last_name}</h2>
-            <p className="text-gray-400">{mockProfile.email}</p>
+            <h2 className="text-2xl font-bold text-white">{user?.first_name} {user?.last_name}</h2>
+            <p className="text-gray-400">{user?.email}</p>
             <div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-nexus-400/15 text-nexus-400">{mockProfile.role}</span>
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-400">{mockProfile.college.name}</span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-nexus-400/15 text-nexus-400">{user?.role}</span>
             </div>
           </div>
-          <button onClick={() => setEditing(!editing)} className="px-4 py-2.5 rounded-xl border border-white/10 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2">
-            {editing ? <><Save size={14}/> Save</> : <><Edit2 size={14}/> Edit Profile</>}
-          </button>
         </div>
       </div>
 
@@ -46,11 +50,9 @@ export default function ProfilePage() {
         <div className="p-6 rounded-2xl bg-surface-700/30 border border-white/5 space-y-4">
           <h3 className="font-bold text-white text-sm">Quick Stats</h3>
           {[
-            { label: 'Events Registered', value: mockProfile.stats.events_registered, color: 'text-cyan-400' },
-            { label: 'Events Attended', value: mockProfile.stats.events_attended, color: 'text-green-400' },
-            { label: 'Certificates', value: mockProfile.stats.certificates, color: 'text-amber-400' },
-            { label: 'Teams', value: mockProfile.stats.team_count, color: 'text-purple-400' },
-            { label: 'Wallet Balance', value: `₹${mockProfile.stats.wallet_balance}`, color: 'text-nexus-400' },
+            { label: 'Events Registered', value: registrations.length, color: 'text-cyan-400' },
+            { label: 'Confirmed', value: registrations.filter(r => r.status === 'confirmed').length, color: 'text-green-400' },
+            { label: 'Upcoming', value: registrations.filter(r => new Date(r.start_datetime) > new Date()).length, color: 'text-purple-400' },
           ].map(s => (
             <div key={s.label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
               <span className="text-sm text-gray-400">{s.label}</span>
@@ -61,17 +63,18 @@ export default function ProfilePage() {
 
         {/* Personal Info */}
         <div className="lg:col-span-2 p-6 rounded-2xl bg-surface-700/30 border border-white/5 space-y-5">
-          <h3 className="font-bold text-white text-sm">Personal Information</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-white text-sm">Personal Information</h3>
+            <button onClick={() => setEditing(!editing)} className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white transition flex items-center gap-1.5">
+              {editing ? <><Save size={12}/> Save</> : <><Edit2 size={12}/> Edit</>}
+            </button>
+          </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
               { icon: User, label: 'First Name', value: form.first_name, key: 'first_name' },
               { icon: User, label: 'Last Name', value: form.last_name, key: 'last_name' },
-              { icon: Mail, label: 'Email', value: mockProfile.email, disabled: true },
+              { icon: Mail, label: 'Email', value: user?.email || '', disabled: true },
               { icon: Phone, label: 'Phone', value: form.phone, key: 'phone' },
-              { icon: Building2, label: 'College', value: mockProfile.college.name, disabled: true },
-              { icon: BookOpen, label: 'Department', value: mockProfile.department.dept_name, disabled: true },
-              { icon: MapPin, label: 'City', value: mockProfile.college.city, disabled: true },
-              { icon: Calendar, label: 'Joined', value: new Date(mockProfile.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }), disabled: true },
             ].map(field => (
               <div key={field.label}>
                 <label className="block text-xs text-gray-500 font-medium mb-1.5">{field.label}</label>
@@ -87,12 +90,29 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* QR Code — Live Canvas Render */}
-      <QRCodeDisplay
-        token={mockProfile.qr_token}
-        userName={`${mockProfile.first_name} ${mockProfile.last_name}`}
-        type="user"
-      />
+      {/* My Registrations */}
+      <div className="p-6 rounded-2xl bg-surface-700/30 border border-white/5">
+        <h3 className="font-bold text-white text-sm mb-4">My Registrations</h3>
+        {registrations.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No registrations yet. Go to Events to register!</p>
+        ) : (
+          <div className="space-y-2">
+            {registrations.map(r => (
+              <div key={r.registration_id} className="flex items-center justify-between p-4 rounded-xl bg-surface-800/40 border border-white/5">
+                <div>
+                  <h4 className="text-sm font-bold text-white">{r.event_name}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{new Date(r.start_datetime).toLocaleDateString()} • {r.category_name}</p>
+                </div>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                  r.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                  r.status === 'waitlisted' ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-gray-500/20 text-gray-400'
+                }`}>{r.status?.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

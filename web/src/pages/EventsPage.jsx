@@ -26,12 +26,17 @@ export default function EventsPage() {
   const [type, setType] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
   const [registeredId, setRegisteredId] = useState(null)
+  const [myRegistrations, setMyRegistrations] = useState([])
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const { data } = await api.get('/events')
-        setEvents(data.data || [])
+        const [eventsRes, regsRes] = await Promise.all([
+          api.get('/events').catch(() => ({ data: { data: [] } })),
+          api.get('/registrations/my').catch(() => ({ data: { data: [] } }))
+        ])
+        setEvents(eventsRes.data?.data || [])
+        setMyRegistrations(regsRes.data?.data || [])
       } catch (err) {
         console.error('Failed to fetch events:', err)
       } finally {
@@ -167,29 +172,57 @@ export default function EventsPage() {
               </div>
 
               {/* CTA */}
-              <button 
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    await api.post('/registrations', { event_id: evt.event_id });
-                    setRegisteredId(evt.event_id);
-                  } catch(err) {
-                    alert(err.response?.data?.message || 'Registration failed');
-                  }
-                }}
-                disabled={registeredId === evt.event_id}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn ${
-                  registeredId === evt.event_id 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : 'bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500'
-                }`}>
-                {registeredId === evt.event_id ? (
-                  <><CheckCircle size={14} /> Registered!</>
-                ) : (
-                  <>Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" /></>
-                )}
-              </button>
+              {(() => {
+                const myReg = myRegistrations.find(r => r.event_id === evt.event_id);
+                const isRegistered = !!myReg || registeredId === evt.event_id;
+                
+                return (
+                  <button 
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      if (isRegistered) {
+                        // Unregister
+                        if (myReg && myReg.registration_id) {
+                          if (!window.confirm("Are you sure you want to cancel your registration?")) return;
+                          try {
+                            await api.delete(`/registrations/${myReg.registration_id}`);
+                            setMyRegistrations(prev => prev.filter(r => r.event_id !== evt.event_id));
+                            setRegisteredId(null);
+                          } catch(err) {
+                            alert(err.response?.data?.message || 'Cancellation failed');
+                          }
+                        } else {
+                          alert("Please refresh the page to cancel a newly added registration.");
+                        }
+                      } else {
+                        // Register
+                        try {
+                          const res = await api.post('/registrations', { event_id: evt.event_id });
+                          setMyRegistrations(prev => [...prev, { event_id: evt.event_id, registration_id: res.data?.data?.registration_id }]);
+                          setRegisteredId(evt.event_id);
+                        } catch(err) {
+                          alert(err.response?.data?.message || 'Registration failed');
+                        }
+                      }
+                    }}
+                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group/btn ${
+                      isRegistered 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30' 
+                        : 'bg-white/5 text-white hover:bg-gradient-to-r hover:from-nexus-400 hover:to-accent-500'
+                    }`}>
+                    {isRegistered ? (
+                      <>
+                        <span className="group-hover/btn:hidden flex items-center gap-2"><CheckCircle size={14} /> Registered!</span>
+                        <span className="hidden group-hover/btn:flex items-center gap-2"><X size={14} /> Unregister</span>
+                      </>
+                    ) : (
+                      <>Register Now <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" /></>
+                    )}
+                  </button>
+                )
+              })()}
             </Link>
           ))}
         </div>
