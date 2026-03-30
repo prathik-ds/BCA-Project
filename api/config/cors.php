@@ -15,13 +15,12 @@ $allowedOrigins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins)) {
+if ($origin) {
+    // In development, allow the requesting origin dynamically
     header("Access-Control-Allow-Origin: {$origin}");
 } else {
-    // In development, allow all origins (remove in production)
     header("Access-Control-Allow-Origin: *");
 }
-
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Credentials: true");
